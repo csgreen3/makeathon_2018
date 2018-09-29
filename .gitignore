@@ -54,3 +54,4 @@ dkms.conf
 /pcb/History/*
 pcb/Project\ Logs*
 Project\ Outputs*
+*.sw[opi]
