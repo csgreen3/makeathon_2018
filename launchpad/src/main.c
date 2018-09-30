@@ -81,6 +81,7 @@ int main(void)
     init();
     SystemCoreClockUpdate();
 	SysTick_Config(SystemCoreClock / 1000);
+    io_init();
     eusci_init();
 
     // Enable sleep on exit from ISR
@@ -90,14 +91,29 @@ int main(void)
     __enable_irq();
 
     // Enable eUSCIA0 interrupt in NVIC module
-    NVIC->ISER[0] = 1 << ((EUSCIA0_IRQn) & 31);
+    //NVIC->ISER[0] = 1 << ((EUSCIA0_IRQn | EUSCIA2_IRQn) & 31);
+    //NVIC->ISER[0] = 1 << ((EUSCIA0_IRQn) & 31);
+    NVIC_SetPriority(EUSCIA0_IRQn, 4);
+    NVIC_EnableIRQ(EUSCIA0_IRQn);
+    NVIC_SetPriority(EUSCIA2_IRQn, 3);
+    NVIC_EnableIRQ(EUSCIA2_IRQn);
 
     printf("\r\nprogram start\r\n");
     print_prompt();
+    char temp;
     while (1)
     {
         blink_handler(1000);
         check_input(eusci_get_rx(SERIAL_DEBUG), &entry, &print_prompt);
+        //check_input(eusci_get_rx(SERIAL_RADIO), &entry, &print_prompt);
+        if (ticks % 250)
+        {
+            _putc(SERIAL_RADIO, false, 'a');
+            if (!_getc(SERIAL_RADIO, false, &temp))
+            {
+                _putc(SERIAL_DEBUG, true, temp);
+            }
+        }
     }
 
     // Enter LPM0
