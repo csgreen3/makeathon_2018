@@ -50,6 +50,9 @@ serve:
 debug: all
 	$(GDB) $(OBJ_DIR)/$(PROJECT).out
 
+flash: all
+	$(GDB) $(OBJ_DIR)/$(PROJECT).out -ex load -batch
+
 serial%:
 	screen /dev/tty$* 9600,cs8,-parenb,-cstopb,-hupcl
 
