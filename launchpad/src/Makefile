@@ -25,7 +25,7 @@ LDFLAGS			:= -mcpu=cortex-m4 -march=armv7e-m -mfloat-abi=hard -mfpu=fpv4-sp-d16 
 
 OBJECTS += $(OBJ_DIR)/startup_msp432p401r_gcc.o
 OBJECTS += $(OBJ_DIR)/system_msp432p401r.o
-OBJECTS += $(OBJ_DIR)/msp432p401_euscia0_uart.o
+OBJECTS += $(OBJ_DIR)/main.o
 all: $(OBJ_DIR)/$(PROJECT).out
 
 $(OBJECTS): | $(OBJ_DIR)
