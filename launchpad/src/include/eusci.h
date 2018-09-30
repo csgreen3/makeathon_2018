@@ -6,8 +6,9 @@
 #include <stdbool.h>
 
 #define SERIAL_DEBUG EUSCI_A0
+#define SERIAL_RADIO EUSCI_A2
 
-#define NUM_INTERFACES 1
+#define NUM_INTERFACES 2
 
 void eusci_init(void);
 

@@ -5,35 +5,57 @@ PC_Buffer *tx_buf[NUM_INTERFACES], *rx_buf[NUM_INTERFACES];
 
 PC_Buffer *eusci_get_tx(EUSCI_A_Type* eusci)
 {
-    // TODO, use other interfaces
-    if (eusci != SERIAL_DEBUG)
-    {
-        return NULL;
-    }
-
-    return tx_buf[0];
+    if (eusci == SERIAL_DEBUG) return tx_buf[0];
+    return tx_buf[1];
 }
 
 PC_Buffer *eusci_get_rx(EUSCI_A_Type* eusci)
 {
-    // TODO, use other interfaces
-    if (eusci != SERIAL_DEBUG)
-    {
-        return NULL;
-    }
+    if (eusci == SERIAL_DEBUG) return rx_buf[0];
+    return rx_buf[1];
+}
 
-    return rx_buf[0];
+void radio_init(void)
+{
+    // radio on A2
+    P3->SEL0 |= BIT2 | BIT3;
+
+    // Configure UART
+    EUSCI_A2->CTLW0 |= EUSCI_A_CTLW0_SWRST; // Put eUSCI in reset
+    EUSCI_A2->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset
+            EUSCI_A_CTLW0_SSEL__SMCLK;      // Configure eUSCI clock source for SMCLK
+
+    // Baud Rate calculation
+    // 12000000/(16*9600) = 78.125
+    // Fractional portion = 0.125
+    // User's Guide Table 21-4: UCBRSx = 0x10
+    // UCBRFx = int ( (78.125-78)*16) = 2
+    EUSCI_A2->BRW = 78;                     // 12000000/16/9600
+    EUSCI_A2->MCTLW = (2 << EUSCI_A_MCTLW_BRF_OFS) |
+            EUSCI_A_MCTLW_OS16;
+
+    EUSCI_A2->CTLW0 &= ~EUSCI_A_CTLW0_SWRST; // Initialize eUSCI
+    EUSCI_A2->IFG &= ~EUSCI_A_IFG_RXIFG;     // Clear eUSCI RX interrupt flag
+    EUSCI_A2->IE |= EUSCI_A_IE_RXIE;         // Enable USCI_A0 RX interrupt
+
+    tx_buf[1] = (PC_Buffer *) malloc(sizeof(PC_Buffer));
+    rx_buf[1] = (PC_Buffer *) malloc(sizeof(PC_Buffer));
+    if (!tx_buf[1] || !rx_buf[1])
+        return;
+    if (!pc_buffer_init(tx_buf[1], 64))
+        return;
+    pc_buffer_init(rx_buf[1], 64);
 }
 
 void eusci_init(void)
 {
-    // Configure UART pins
+    // usb on A0
     P1->SEL0 |= BIT2 | BIT3;                // set 2-UART pin as secondary function
 
     // Configure UART
     EUSCI_A0->CTLW0 |= EUSCI_A_CTLW0_SWRST; // Put eUSCI in reset
     EUSCI_A0->CTLW0 = EUSCI_A_CTLW0_SWRST | // Remain eUSCI in reset
-            EUSCI_B_CTLW0_SSEL__SMCLK;      // Configure eUSCI clock source for SMCLK
+            EUSCI_A_CTLW0_SSEL__SMCLK;      // Configure eUSCI clock source for SMCLK
 
     // Baud Rate calculation
     // N = fBRCLK/115200 = 104.167 (> 16), N/16 = 6.5104
@@ -56,19 +78,13 @@ void eusci_init(void)
     if (!pc_buffer_init(tx_buf[0], 64))
         return;
     pc_buffer_init(rx_buf[0], 64);
+
+    radio_init();
 }
 
 int _getc(EUSCI_A_Type* eusci, bool block, char *c)
 {
-    PC_Buffer *rx;
-
-    // TODO, use other interfaces
-    if (eusci != SERIAL_DEBUG)
-    {
-        return 1;
-    }
-
-    rx = rx_buf[0];
+    PC_Buffer *rx = eusci_get_rx(eusci);
 
     /* check if a character can be retrieved */
     if (pc_buffer_empty(rx)) {
@@ -86,15 +102,7 @@ int _getc(EUSCI_A_Type* eusci, bool block, char *c)
 
 int _putc(EUSCI_A_Type* eusci, bool block, char data)
 {
-    PC_Buffer *tx;
-
-    // TODO, use other interfaces
-    if (eusci != SERIAL_DEBUG)
-    {
-        return 1;
-    }
-
-    tx = tx_buf[0];
+    PC_Buffer *tx = eusci_get_tx(eusci);
 
     /* check if a character can be added */
     if (pc_buffer_full(tx)) {
@@ -159,21 +167,18 @@ void eusci_a_handler(EUSCI_A_Type* eusci, PC_Buffer *tx, PC_Buffer *rx,
     }
 }
 
-// UART interrupt service routine
 void EUSCIA0_IRQHandler(void)
 {
     static char prev1 = '\0', prev2 = '\0';
-
-    /*
-    if (EUSCI_A0->IFG & EUSCI_A_IFG_RXIFG)
-    {
-        // Check if the TX buffer is empty first
-        while(!(EUSCI_A0->IFG & EUSCI_A_IFG_TXIFG));
-
-        // Echo the received character back
-        EUSCI_A0->TXBUF = EUSCI_A0->RXBUF;
-    }
-    */
-
+    __disable_irq();
     eusci_a_handler(EUSCI_A0, tx_buf[0], rx_buf[0], &prev1, &prev2);
+    __enable_irq();
+}
+
+void EUSCIA2_IRQHandler(void)
+{
+    static char prev1 = '\0', prev2 = '\0';
+    __disable_irq();
+    eusci_a_handler(EUSCI_A2, tx_buf[1], rx_buf[1], &prev1, &prev2);
+    __enable_irq();
 }

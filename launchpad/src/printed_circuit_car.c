@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include "printed_circuit_car.h"
 
+void io_init(void)
+{
+    /* radio MODE bits */
+    P3->DIR |= (BIT5 | BIT7);
+
+    /* motor control IO */
+    P2->DIR |= (BIT4 | BIT6 | BIT7);
+
+    /* UART RX & TX */
+}
+
 void turn_left(void)
 {
     printf("%s called\r\n", __func__);
