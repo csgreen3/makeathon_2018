@@ -1,0 +1,54 @@
+*************************************************************
+FileName = vehicle_control.GBR
+AutoAperture = True
+*************************************************************
+Generating : Top Layer
+      File : vehicle_control.GTL
+
+    Adding Layer      : Top Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D10
+    D11
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+    D18
+*************************************************************
+
+*************************************************************
+Generating : Mechanical 1
+      File : vehicle_control.GM1
+
+    Adding Layer      : Mechanical 1
+
+
+Used DCodes :
+    D11
+*************************************************************
+
+*************************************************************
+Generating : Bottom Layer
+      File : vehicle_control.GBL
+
+    Adding Layer      : Bottom Layer
+
+    Adding Layer      : Multi-Layer
+
+
+Used DCodes :
+    D12
+    D13
+    D14
+    D15
+    D16
+    D17
+    D18
+*************************************************************
+
