@@ -1,3 +1,5 @@
+.PHONY: clean all serve
+
 DEVICE := MSP432P401R
 
 PROJECT         := printed_circuit_car
@@ -41,8 +43,15 @@ $(OBJ_DIR)/$(PROJECT).out: $(OBJECTS)
 	@echo Linking objects and generating output binary
 	$(CC) $(LDFLAGS) $^ -o $@ $(INCLUDES)
 
+EMULATION_PATH = $(INSTALL_DIR)/emulation/common/uscif
+serve:
+	$(EMULATION_PATH)/gdb_agent_console -f MSP432 $(EMULATION_PATH)/xds110_msp432_jtag.dat
+
 debug: all
 	$(GDB) $(OBJ_DIR)/$(PROJECT).out
+
+serial%:
+	screen /dev/tty$* 9600,cs8,-parenb,-cstopb,-hupcl
 
 clean:
 	@rm -rf $(OBJ_DIR)
