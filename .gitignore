@@ -50,3 +50,7 @@ modules.order
 Module.symvers
 Mkfile.old
 dkms.conf
+
+/pcb/History/*
+pcb/Project\ Logs*
+Project\ Outputs*
